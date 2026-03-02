@@ -162,9 +162,11 @@ class ChessGame:
         self.valid_moves_cache = {}
 
         # Switch turn
-        self.current_turn = 'black' if self.current_turn == 'white' else 'white'
-
+        # FIX: Pehle jis player ne move chali hai uska time minus karo
         self.update_clock()
+
+        # FIR turn switch karo
+        self.current_turn = 'black' if self.current_turn == 'white' else 'white'
 
         if self.white_time == 0:
             return False, "White ran out of time", None
