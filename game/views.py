@@ -116,17 +116,32 @@ def get_state(request):
     game_data = request.session.get('game')
     if not game_data:
         game = ChessGame()
-        request.session['game'] = game.to_dict()
-        game_data = game.to_dict()
+    else:
+        game = ChessGame.from_dict(game_data)
+        
+        # Agar bada gap hai (tab close kiya tha), toh time minus mat karo
+        import time
+        elapsed = time.time() - game.last_ts
+        if elapsed > 10 and not game.paused:
+            pass  # Force pause without time penalty
+        else:
+            game.update_clock() # Sirf chote refresh (few seconds) ka time minus karo
+            
+    # Jab bhi page load/refresh ho, game hamesha PAUSED state mein rahega
+    game.paused = True
+    game.last_ts = time.time()
+
+    request.session['game'] = game.to_dict()
+    request.session.modified = True
 
     return JsonResponse({
-        'board': game_data['board'],
-        'current_turn': game_data['current_turn'],
-        'white_time': game_data['white_time'],
-        'black_time': game_data['black_time'],
-        'paused': game_data.get('paused', False),
-        'move_history': game_data['move_history'],
-        'captured_pieces': game_data['captured'],
+        'board': game.board,
+        'current_turn': game.current_turn,
+        'white_time': game.white_time,
+        'black_time': game.black_time,
+        'paused': game.paused,
+        'move_history': game.move_history,
+        'captured_pieces': game.captured,
     })
 
 @csrf_exempt

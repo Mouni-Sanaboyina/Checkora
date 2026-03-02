@@ -720,10 +720,13 @@
            Move execution
            ============================================================== */
         async function tryMove(fr, fc, tr, tc) {
-            clearStatus();
+            if (paused) return;
+            const p = board[fr][fc];
+            if (!p || pColor(p) !== turn) return;
+
             if (isPromotionMove(fr, fc, tr)) {
                 pendingPromo = { fr, fc, tr, tc };
-                const color = pColor(board[fr][fc]);
+                const color = pColor(p);
                 showPromoModal(color);
                 return;
             }
@@ -731,7 +734,7 @@
         }
 
         async function executeMove(fr, fc, tr, tc, promotionPiece) {
-            clearStatus();
+            // clearStatus function definition if not globally available can be ignored or added here.
             try {
                 const body = {
                     from_row: fr, from_col: fc,
@@ -744,15 +747,34 @@
                     board = data.board;
                     turn  = data.current_turn;
                     lastMove = { from: [fr, fc], to: [tr, tc] };
+                    
+                    // FIX: Har move ke baad backend se exact time sync karo
+                    whiteTime = data.white_time;
+                    blackTime = data.black_time;
+                    
+                    selected = null;
+                    hints = [];
                     updateTurn();
                     updateMoves(data.move_history);
                     updateCaptured(data.captured_pieces);
                     syncPieces();
+                    
+                    // FIX: UI timers ko turant update karo
+                    renderClocks(); 
+                    
+                    startTimer();
                 } else {
-                    showStatus(data.message, true);
+                    const statusEl  = document.getElementById('statusBar');
+                    statusEl.textContent = data.message;
+                    statusEl.className = 'status-bar error';
+                    deselect();
                 }
-            } catch {
-                showStatus('Connection error.', true);
+            } catch (e) {
+                const statusEl  = document.getElementById('statusBar');
+                statusEl.textContent = 'Connection error.';
+                statusEl.className = 'status-bar error';
+            }
+        }
         async function tryMove(fr,fc,tr,tc) {
             if (paused) return;
             
@@ -823,6 +845,10 @@
         function updateTurn() {
             turnEl.textContent = turn === 'white' ? "White's Turn" : "Black's Turn";
             turnEl.className = 'turn-badge ' + turn;
+
+            // Active clock class ko player turn ke hisaab se switch karo
+            document.getElementById('whiteClock').classList.toggle('active', turn === 'white');
+            document.getElementById('blackClock').classList.toggle('active', turn === 'black');
         }
 
         function updateMoves(history) {
@@ -880,7 +906,12 @@
 
         async function pauseGame() {
             if (paused) return;
-            const d = await post('/api/pause/', {pause:true});
+            // Ab hum current UI timer bhi bhej rahe hain
+            const d = await post('/api/pause/', {
+                pause: true,
+                white_time: whiteTime,
+                black_time: blackTime
+            });
             paused = d.paused;
             whiteTime = d.white_time;
             blackTime = d.black_time;
@@ -890,7 +921,8 @@
 
         async function resumeGame() {
             if (!paused) return;
-            const d = await post('/api/pause/', {pause:false});
+            // Resume karte waqt time bhejne ki zarurat nahi, backend wahi se continue karega
+            const d = await post('/api/pause/', { pause: false });
             paused = d.paused;
             whiteTime = d.white_time;
             blackTime = d.black_time;
@@ -906,8 +938,14 @@
         });
 
         window.addEventListener('beforeunload', () => {
-            if (!paused)
-                navigator.sendBeacon('/api/pause/', JSON.stringify({pause:true}));
+            if (!paused) {
+                // Tab band karte waqt bhi exact time save karwao
+                navigator.sendBeacon('/api/pause/', JSON.stringify({
+                    pause: true,
+                    white_time: whiteTime,
+                    black_time: blackTime
+                }));
+            }
         });
 
         /* ==========================================================
