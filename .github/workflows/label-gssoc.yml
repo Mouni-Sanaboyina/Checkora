@@ -1,0 +1,26 @@
+name: Label new issues with GSSoC
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  add-gssoc-label:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: write
+
+    steps:
+      - name: Ensure GSSoC label exists
+        uses: peter-evans/create-or-update-label@v1
+        with:
+          name: GSSoC
+          color: FF7A00
+          description: "GirlScript Summer of Code"
+
+      - name: Add GSSoC label to the new issue
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: GSSoC
+          github_token: ${{ secrets.GITHUB_TOKEN }}
