@@ -151,15 +151,19 @@
         /* ============================================================
            Squares
            ============================================================ */
-        .square {
-            width: 60px;
-            height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            cursor: pointer;
-        }
+       .square {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        cursor: default;  
+    }
+
+    .square:has(.piece.playable) {
+        cursor: pointer;   
+    }
 
         .square.light { background-color: #eeeed2; }
         .square.dark  { background-color: #769656; }
@@ -201,9 +205,10 @@
             width: 54px;
             height: 54px;
             z-index: 2;
-            pointer-events: auto;
+            pointer-events: none;
             user-select: none;
         }
+        .piece.playable { cursor: pointer; }
         .piece.dragging { opacity: 0.35; }
 
         /* ============================================================
@@ -410,20 +415,6 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-        }
-        .playable:hover {
-            cursor: pointer;
-        }
-
-        .square, .piece {
-            cursor: default;
-        }
-        .white-turn .piece.white:hover {
-            cursor: pointer;
-        }
-
-        .black-turn .piece.black:hover {
-            cursor: pointer;
         }
 
     </style>
@@ -702,15 +693,28 @@
 
                 const img = document.createElement('img');
                 img.src = PIECE_IMG[pKey(p)];
-                img.className = 'piece ' + pColor(p);
+                img.className = 'piece';
                 img.draggable = true;
                 img.ondragstart = e => onDragStart(e,r,c);
                 img.ondragend = () => dragging = false;
                 el.appendChild(img);
             }
             refreshHighlights();
+            markPlayable();
         }
 
+        function markPlayable() {
+    boardEl.querySelectorAll('.piece').forEach(img => {
+        const el = img.closest('.square');
+        const idx = Array.from(boardEl.children).indexOf(el);
+        const r = Math.floor(idx / 8);
+        const c = idx % 8;
+        const p = board[r][c];
+        const isPlayable = p && pColor(p) === turn
+            && !(gameMode === 'ai' && turn === 'black');
+        img.classList.toggle('playable', isPlayable);
+    });
+}
         function refreshHighlights() {
             boardEl.querySelectorAll('.square').forEach(el => {
                 el.classList.remove('selected', 'last-move');
@@ -951,8 +955,7 @@
             turnEl.className = 'turn-badge ' + turn;
             document.getElementById('whiteClock').classList.toggle('active', turn === 'white');
             document.getElementById('blackClock').classList.toggle('active', turn === 'black');
-            document.body.classList.remove('white-turn', 'black-turn');
-            document.body.classList.add(turn === 'white' ? 'white-turn' : 'black-turn');
+            markPlayable();
         }
 
         function updateMoves(history) {
