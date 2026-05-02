@@ -950,6 +950,10 @@
             turnEl.className = 'turn-badge ' + turn;
             document.getElementById('whiteClock').classList.toggle('active', turn === 'white');
             document.getElementById('blackClock').classList.toggle('active', turn === 'black');
+            // Update browser tab title to reflect whose turn it is
+            if (!gameOver) {
+                document.title = (turn === 'white' ? 'White to Move - Checkora' : 'Black to Move - Checkora');
+            }
         }
 
         function updateMoves(history) {
@@ -1001,6 +1005,8 @@
             gameOverMessage.textContent = message;
             gameOverOverlay.classList.add('active');
             showStatus(title + ' ' + message, false);
+            // Update browser tab title to indicate game over
+            document.title = 'Game Over - Checkora';
         }
 
         /* ==========================================================
