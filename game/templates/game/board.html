@@ -280,6 +280,19 @@
         }
         .btn-gold:active { transform: translateY(0); }
 
+        .btn-danger {
+            background: #2a1414;
+            color: #ff6b6b;
+            border: 1px solid #632424;
+            margin-top: 8px;
+        }
+        .btn-danger:hover {
+            background: #402020;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15);
+            transform: translateY(-1px);
+        }
+        .btn-danger:active { transform: translateY(0); }
+
         /* ============================================================
            Responsive
            ============================================================ */
@@ -468,6 +481,7 @@
             </div>
 
             <button id="pauseBtn" class="btn btn-gold">Pause</button>
+            <button id="resignBtn" class="btn btn-danger" onclick="resignGame()">Resign</button>
 
             <div class="board-outer">
                 <div class="board-row">
@@ -1102,6 +1116,34 @@
             wCapEl.innerHTML = bCapEl.innerHTML = '';
             
             loadGame();
+        }
+
+        
+        window.resignGame = async function() {
+            console.log("Resign button clicked!"); // This helps us debug
+            if (!confirm("Are you sure you want to resign?")) return;
+
+            try {
+                const response = await post('/api/resign/');
+                if (response.valid) {
+                    gameOver = true;
+                    paused = true;
+                    alert(response.message + " " + response.game_status);
+                    
+                    document.getElementById('resignBtn').style.display = 'none';
+                    document.getElementById('pauseBtn').style.display = 'none';
+
+                    const statusEl = document.getElementById('statusBar');
+                    if (statusEl) {
+                        statusEl.textContent = response.game_status;
+                        statusEl.style.color = "#f0c040"; 
+                    }
+                    
+                    await loadGame(); 
+                }
+            } catch (error) {
+                console.error("Resign failed:", error);
+            }
         }
 
         /* ==========================================================
