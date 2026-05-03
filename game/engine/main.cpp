@@ -41,6 +41,8 @@ bool W_K_CASTLE = false;
 bool W_Q_CASTLE = false;
 bool B_K_CASTLE = false;
 bool B_Q_CASTLE = false;
+int EN_PASSANT_R = -1;
+int EN_PASSANT_C = -1;
 
 void loadBoard(const string &s) {
     for (int i = 0; i < 64 && i < (int)s.length(); i++) {
@@ -199,6 +201,10 @@ bool validPawn(const string &color, int fr, int fc, int tr, int tc) {
             return true;
 
     if (abs(dc) == 1 && dr == dir && !isEmpty(board[tr][tc]))
+        return true;
+
+    // En Passant
+    if (abs(dc) == 1 && dr == dir && tr == EN_PASSANT_R && tc == EN_PASSANT_C)
         return true;
 
     return false;
@@ -595,6 +601,12 @@ bool leavesKingInCheck(const Move &m, const string &side) {
 
     // Apply move
     char p = board[m.fr][m.fc];
+    
+    // En Passant capture: diagonal pawn move to an empty square
+    if (tolower(static_cast<unsigned char>(p)) == 'p' && m.fc != m.tc && board[m.tr][m.tc] == '.') {
+        board[m.fr][m.tc] = '.'; 
+    }
+
     board[m.tr][m.tc] = m.promoPiece ? m.promoPiece : p;
     board[m.fr][m.fc] = '.';
 
@@ -655,13 +667,11 @@ int minimax(int depth, int alpha, int beta, bool maximizing) {
             board[m.fr][m.fc] = '.';
 
             int rook_fr = -1, rook_fc = -1, rook_tr = -1, rook_tc = -1;
-            char rookPiece = '.';
             if (tolower(src) == 'k' && abs(m.tc - m.fc) == 2) {
                 if (m.tc == 6) { rook_fr = m.fr; rook_fc = 7; rook_tr = m.tr; rook_tc = 5; }
                 else if (m.tc == 2) { rook_fr = m.fr; rook_fc = 0; rook_tr = m.tr; rook_tc = 3; }
                 if (rook_fr != -1) {
-                    rookPiece = board[rook_fr][rook_fc];
-                    board[rook_tr][rook_tc] = rookPiece;
+                    board[rook_tr][rook_tc] = board[rook_fr][rook_fc];
                     board[rook_fr][rook_fc] = '.';
                 }
             }
@@ -681,7 +691,7 @@ int minimax(int depth, int alpha, int beta, bool maximizing) {
             board[m.fr][m.fc] = src;
             board[m.tr][m.tc] = dst;
             if (rook_fr != -1) {
-                board[rook_fr][rook_fc] = rookPiece;
+                board[rook_fr][rook_fc] = board[rook_tr][rook_tc];
                 board[rook_tr][rook_tc] = '.';
             }
 
@@ -699,13 +709,11 @@ int minimax(int depth, int alpha, int beta, bool maximizing) {
             board[m.fr][m.fc] = '.';
 
             int rook_fr = -1, rook_fc = -1, rook_tr = -1, rook_tc = -1;
-            char rookPiece = '.';
             if (tolower(src) == 'k' && abs(m.tc - m.fc) == 2) {
                 if (m.tc == 6) { rook_fr = m.fr; rook_fc = 7; rook_tr = m.tr; rook_tc = 5; }
                 else if (m.tc == 2) { rook_fr = m.fr; rook_fc = 0; rook_tr = m.tr; rook_tc = 3; }
                 if (rook_fr != -1) {
-                    rookPiece = board[rook_fr][rook_fc];
-                    board[rook_tr][rook_tc] = rookPiece;
+                    board[rook_tr][rook_tc] = board[rook_fr][rook_fc];
                     board[rook_fr][rook_fc] = '.';
                 }
             }
@@ -725,7 +733,7 @@ int minimax(int depth, int alpha, int beta, bool maximizing) {
             board[m.fr][m.fc] = src;
             board[m.tr][m.tc] = dst;
             if (rook_fr != -1) {
-                board[rook_fr][rook_fc] = rookPiece;
+                board[rook_fr][rook_fc] = board[rook_tr][rook_tc];
                 board[rook_tr][rook_tc] = '.';
             }
 
@@ -770,6 +778,7 @@ void handleStatus(const string &turn) {
         else         cout << "STATUS STALEMATE" << endl;
     } else {
         if (inCheck) cout << "STATUS CHECK" << endl;
+        else if (isInsufficientMaterial()) cout << "STATUS DRAW" << endl;
         else         cout << "STATUS OK" << endl;
     }
 }
@@ -813,10 +822,6 @@ void handleNotation(const string &turn, int fr, int fc, int tr, int tc) {
         res += files[static_cast<string::size_type>(tc)];
         res += to_string(8 - tr);
 
-        // Standard SAN promotion suffix (assumes Queen as default authoritative notation)
-        if (tr == 0 || tr == 7) {
-            res += "=Q";
-        }
     } else {
         res += static_cast<char>(toupper(static_cast<unsigned char>(type)));
 
@@ -925,13 +930,11 @@ void handleBestMove(const string &turn, int depth) {
         board[m.fr][m.fc] = '.';
 
         int rook_fr = -1, rook_fc = -1, rook_tr = -1, rook_tc = -1;
-        char rookPiece = '.';
         if (tolower(src) == 'k' && abs(m.tc - m.fc) == 2) {
             if (m.tc == 6) { rook_fr = m.fr; rook_fc = 7; rook_tr = m.tr; rook_tc = 5; }
             else if (m.tc == 2) { rook_fr = m.fr; rook_fc = 0; rook_tr = m.tr; rook_tc = 3; }
             if (rook_fr != -1) {
-                rookPiece = board[rook_fr][rook_fc];
-                board[rook_tr][rook_tc] = rookPiece;
+                board[rook_tr][rook_tc] = board[rook_fr][rook_fc];
                 board[rook_fr][rook_fc] = '.';
             }
         }
@@ -951,7 +954,7 @@ void handleBestMove(const string &turn, int depth) {
         board[m.fr][m.fc] = src;
         board[m.tr][m.tc] = dst;
         if (rook_fr != -1) {
-            board[rook_fr][rook_fc] = rookPiece;
+            board[rook_fr][rook_fc] = board[rook_tr][rook_tc];
             board[rook_tr][rook_tc] = '.';
         }
 
@@ -959,18 +962,6 @@ void handleBestMove(const string &turn, int depth) {
             if (eval > bestVal) { bestVal = eval; best = m; }
         } else {
             if (eval < bestVal) { bestVal = eval; best = m; }
-        }
-    }
-
-    // Safety net: re-validate before emitting
-    if (!validateMove(turn, best.fr, best.fc, best.tr, best.tc, true) ||
-        leavesKingInCheck(best, turn)) {
-        for (auto &m : legal) {
-            if (validateMove(turn, m.fr, m.fc, m.tr, m.tc, true) &&
-                !leavesKingInCheck(m, turn)) {
-                best = m;
-                break;
-            }
         }
     }
 
@@ -982,17 +973,19 @@ int main() {
     string command;
     while (cin >> command) {
         if (command == "VALIDATE") {
-            string b, rights, t; int fr, fc, tr, tc;
-            cin >> b >> rights >> t >> fr >> fc >> tr >> tc;
+            string b, rights, t; int epR, epC, fr, fc, tr, tc;
+            cin >> b >> rights >> t >> epR >> epC >> fr >> fc >> tr >> tc;
             loadBoard(b);
             loadCastlingRights(rights);
+            EN_PASSANT_R = epR; EN_PASSANT_C = epC;
             validateMove(t, fr, fc, tr, tc);
         } 
         else if (command == "MOVES") {
-            string b, rights, t; int r, c;
-            cin >> b >> rights >> t >> r >> c;
+            string b, rights, t; int epR, epC, r, c;
+            cin >> b >> rights >> t >> epR >> epC >> r >> c;
             loadBoard(b);
             loadCastlingRights(rights);
+            EN_PASSANT_R = epR; EN_PASSANT_C = epC;
             handleMoves(t, r, c);
         } 
         else if (command == "ATTACKED") {
@@ -1004,31 +997,35 @@ int main() {
             else cout << "NO" << endl;
         }
         else if (command == "PROMOTE") {
-            string b, rights, t; int fr, fc, tr, tc; char promo;
-            cin >> b >> rights >> t >> fr >> fc >> tr >> tc >> promo;
+            string b, rights, t; int epR, epC, fr, fc, tr, tc; char promo;
+            cin >> b >> rights >> t >> epR >> epC >> fr >> fc >> tr >> tc >> promo;
             loadBoard(b);
             loadCastlingRights(rights);
+            EN_PASSANT_R = epR; EN_PASSANT_C = epC;
             handlePromote(t, fr, fc, tr, tc, promo);
         }
         else if (command == "STATUS") {
-            string b, rights, t;
-            cin >> b >> rights >> t;
+            string b, rights, t; int epR, epC;
+            cin >> b >> rights >> t >> epR >> epC;
             loadBoard(b);
             loadCastlingRights(rights);
+            EN_PASSANT_R = epR; EN_PASSANT_C = epC;
             handleStatus(t);
         }
         else if (command == "BESTMOVE") {
-            string b, rights, t; int depth;
-            cin >> b >> rights >> t >> depth;
+            string b, rights, t; int epR, epC, depth;
+            cin >> b >> rights >> t >> epR >> epC >> depth;
             loadBoard(b);
             loadCastlingRights(rights);
+            EN_PASSANT_R = epR; EN_PASSANT_C = epC;
             handleBestMove(t, depth);
         }
         else if (command == "NOTATION") {
-            string b, rights, t; int fr, fc, tr, tc;
-            cin >> b >> rights >> t >> fr >> fc >> tr >> tc;
+            string b, rights, t; int epR, epC, fr, fc, tr, tc;
+            cin >> b >> rights >> t >> epR >> epC >> fr >> fc >> tr >> tc;
             loadBoard(b);
             loadCastlingRights(rights);
+            EN_PASSANT_R = epR; EN_PASSANT_C = epC;
             handleNotation(t, fr, fc, tr, tc);
         }
     }

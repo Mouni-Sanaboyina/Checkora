@@ -101,6 +101,8 @@ def new_game(request):
     
     if mode not in ('pvp', 'ai'):
         mode = 'pvp'
+    
+    player_color = data.get('player_color', 'white')
 
     request.session['white_name'] = data.get('white_name', 'White')
     request.session['black_name'] = data.get('black_name', 'Black')
@@ -123,6 +125,7 @@ def new_game(request):
         'captured_pieces': {'white': [], 'black': []},
         'mode': game.mode,
         'player_color': game.player_color,
+        # We send names back just to confirm they were saved
         'white_name': request.session['white_name'],
         'black_name': request.session['black_name'],
         'difficulty': difficulty,
@@ -170,7 +173,7 @@ def get_state(request):
             game.update_clock()
 
     # Always start in paused state on page load/refresh
-    game.paused = True
+    game.paused = False
     game.last_ts = time.time()
 
     request.session['game'] = game.to_dict()
