@@ -574,8 +574,8 @@
         confirmOverlay.classList.add('active');
     }
 
-   if (welcomePvPBtn) welcomePvPBtn.onclick = () => { startNewGame('pvp').then(() => welcomeOverlay.classList.remove('active')); };
-if (welcomeAIBtn) welcomeAIBtn.onclick = () => { startNewGame('ai').then(() => welcomeOverlay.classList.remove('active')); };
+    if (welcomePvPBtn) welcomePvPBtn.onclick = () => { welcomeOverlay.classList.remove('active'); startNewGame('pvp'); };
+    if (welcomeAIBtn) welcomeAIBtn.onclick = () => { welcomeOverlay.classList.remove('active'); startNewGame('ai'); };
     if (welcomeResumeBtn) welcomeResumeBtn.onclick = () => { 
         welcomeOverlay.classList.remove('active'); 
         if (paused) resumeGame();
