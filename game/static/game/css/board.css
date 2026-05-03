@@ -349,6 +349,108 @@ body {
     .panel .card { flex: 1; min-width: 200px; }
 }
 
+@media (max-width: 768px) {
+    :root {
+        --board-border-width: 3px;
+        --mobile-board-size: min(calc(100vw - 52px), 480px);
+        --mobile-square-size: calc((var(--mobile-board-size) - (var(--board-border-width) * 2)) / 8);
+    }
+
+    .header {
+        padding: 16px 0 10px;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    .game-layout {
+        width: 100%;
+        gap: 16px;
+        padding: 10px 12px 24px;
+    }
+
+    .panel,
+    .board-container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .panel {
+        flex-direction: column;
+    }
+
+    .panel .card {
+        min-width: 0;
+    }
+
+    .board-outer {
+        width: 100%;
+        max-width: calc(100vw - 24px);
+    }
+
+    .chessboard {
+        width: var(--mobile-board-size);
+        height: var(--mobile-board-size);
+        border-width: var(--board-border-width);
+        grid-template-columns: repeat(8, var(--mobile-square-size));
+        grid-template-rows: repeat(8, var(--mobile-square-size));
+    }
+
+    .square {
+        width: 100%;
+        height: 100%;
+    }
+
+    .ranks span {
+        height: var(--mobile-square-size);
+    }
+
+    .files {
+        padding-left: 24px;
+    }
+
+    .files span {
+        width: var(--mobile-square-size);
+    }
+
+    .piece,
+    .capture-ring {
+        width: 90%;
+        height: 90%;
+    }
+
+    .move-dot {
+        width: 28%;
+        height: 28%;
+    }
+
+    .capture-ring {
+        border-width: max(3px, 0.08rem);
+    }
+
+    .clocks {
+        width: 100%;
+    }
+
+    .clock {
+        padding: 12px;
+    }
+
+    .clock .time {
+        font-size: 1rem;
+    }
+
+    .btn {
+        min-height: 44px;
+    }
+
+    .turn-badge,
+    #pauseBtn {
+        width: 100%;
+    }
+}
+
 /* ================= CLOCKS ================= */
 
 .clocks {
