@@ -1153,6 +1153,9 @@
                 gameOver = false;
                 gameMode = d.mode;
                 playerColor = d.player_color || 'white';
+                lastMove = null;
+                selected = null;
+                hints = [];
                 
                 if (gameMode === 'ai') {
                     flipped = (playerColor === 'black');
@@ -1161,14 +1164,20 @@
                 }
 
                 if (modeBadge) modeBadge.textContent = gameMode === 'ai' ? 'VS AI' : 'PVP';
+                lastMove = null;
+                selected = null;
+                hints = [];
                 movesEl.innerHTML = '<span class="placeholder">No moves yet</span>';
                 wCapEl.innerHTML = bCapEl.innerHTML = '';
 
-                await loadGame();
-                // Apply active state after UI reload
-                updateModeButtonsUI(gameMode);
+                updateMoves([]);
+                updateCaptured({ white: [], black: [] });
+                updateTurn();
+                buildBoard();
+                renderClocks();
                 paused = false;
                 updatePauseUI();
+                startTimer();
 
                 // Auto-trigger AI if it's their turn
                 if (gameMode === 'ai' && turn !== playerColor) {
@@ -1398,19 +1407,7 @@
                 const mode = document.querySelector('input[name="go_mode"]:checked').value;
                 const diff = document.getElementById('goDifficultySelect').value;
                 gameOverOverlay.classList.remove('active');
-                gameOverOverlay.classList.remove('game-over-celebration');
-                
-                // Add this: Clear confetti container
-                const confettiContainer = gameOverOverlay.querySelector('.confetti-container');
-                if (confettiContainer) {
-                    confettiContainer.remove();
-                }
-                
-                if (mode === 'ai') {
-                    showSideSelectionModal(side => startNewGame(mode, side, diff));
-                } else {
-                    startNewGame(mode, 'white', diff);
-                }
+                startNewGame(mode, 'white', diff);
             };
 
             // Theme Switcher
