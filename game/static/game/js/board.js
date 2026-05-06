@@ -999,6 +999,10 @@
                 gameOver = false;
                 gameMode = d.mode;
                 playerColor = d.player_color || 'white';
+                lastMove = null;
+                selected = null;
+                hints = [];
+                highlightCheck();
                 
                 if (gameMode === 'ai') {
                     flipped = (playerColor === 'black');
@@ -1008,7 +1012,7 @@
 
                 if (modeBadge) modeBadge.textContent = gameMode === 'ai' ? 'VS AI' : 'PVP';
                 movesEl.innerHTML = '<span class="placeholder">No moves yet</span>';
-                wCapEl.innerHTML = bCapEl.innerHTML = '';
+                refreshHighlights();
 
                 await loadGame();
                 // Apply active state after UI reload
