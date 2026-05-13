@@ -1376,7 +1376,10 @@
 
             if (resignBtn) resignBtn.onclick = () => {
                 if (!gameOver && !paused) {
-                    showConfirm("Resign?", "Are you sure you want to resign?", () => endGame('resign', turn));
+                    showConfirm("Resign?", "Are you sure you want to resign?", async () => {
+                        await post('/api/resign/', {});
+                        endGame('resign', turn);
+                    });
                 }
             };
 
