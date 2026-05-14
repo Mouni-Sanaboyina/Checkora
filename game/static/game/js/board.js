@@ -1407,7 +1407,11 @@
                 const mode = document.querySelector('input[name="go_mode"]:checked').value;
                 const diff = document.getElementById('goDifficultySelect').value;
                 gameOverOverlay.classList.remove('active');
-                startNewGame(mode, 'white', diff);
+                if (mode === 'ai') {
+                    showSideSelectionModal(side => startNewGame('ai', side, diff));
+                } else {
+                    startNewGame('pvp');
+                }
             };
 
             // Theme Switcher
