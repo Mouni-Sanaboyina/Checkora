@@ -1153,6 +1153,9 @@
                 gameOver = false;
                 gameMode = d.mode;
                 playerColor = d.player_color || 'white';
+                lastMove = null;
+                selected = null;
+                hints = [];
                 
                 if (gameMode === 'ai') {
                     flipped = (playerColor === 'black');
